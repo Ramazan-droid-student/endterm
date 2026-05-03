@@ -10,7 +10,7 @@ function Auth({ setToken }) {
     e.preventDefault();
     if (!username || !password) return alert("Заполните поля");
 
-    const url = `https://endterm-41mm.onrender.com](https://endterm-41mm.onrender.com${isLogin ? 'login' : 'register'}`;
+    const url = ` https://endterm-41mm.onrender.com${isLogin ? 'login' : 'register'}`;
     
     try {
       const res = await axios.post(url, { username, password });
