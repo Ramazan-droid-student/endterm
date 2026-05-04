@@ -12,8 +12,11 @@ function App() {
   const [newPrice, setNewPrice] = useState("");
   const [token, setToken] = useState(localStorage.getItem('token') || null);
 
-  const API_URL = "https://endterm-41mm.onrender.com";
-  const WS_URL = API_URL.replace(/^http/, 'ws');
+  const BASE_URL = "https://endterm-41mm.onrender.com";
+
+  const API_URL = `${BASE_URL}/api`;
+
+  const WS_URL = BASE_URL.replace(/^http/, 'ws');
 
   useEffect(() => {
     if (token) {
@@ -28,7 +31,7 @@ function App() {
 
     const fetchStocks = async () => {
       try {
-        const res = await axios.get(`${API_URL}/api/stocks`, {
+        const res = await axios.get(`${API_URL}/stocks`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const prices = {};
@@ -37,7 +40,7 @@ function App() {
         });
         setMarketPrices(prices);
       } catch (e) {
-        console.error(e);
+        console.error("Ошибка при получении акций:", e);
       }
     };
 
@@ -65,26 +68,31 @@ function App() {
 
   const handleBuy = async (ticker) => {
     try {
-      const res = await axios.post(`${API_URL}/api/buy`, { ticker, amount: 1 }, {
+      const res = await axios.post(`${API_URL}/buy`, { ticker, amount: 1 }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setWalletBalance(res.data.balance);
       setHoldings(res.data.holdings);
     } catch (err) {
-      alert(err.response?.data?.message || "Ошибка");
+      alert(err.response?.data?.message || "Ошибка при покупке");
     }
   };
 
   const handleUpdatePrice = async () => {
-    if (!myTicker || !newPrice) return alert("Заполните поля");
+    if (!myTicker || !newPrice) return alert("Заполните все поля");
     try {
-      await axios.patch(`${API_URL}/api/stocks/update-price`, 
+      await axios.patch(`${API_URL}/stocks/update-price`, 
         { ticker: myTicker, newPrice: parseFloat(newPrice) }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setNewPrice("");
+      alert("Цена успешно обновлена");
     } catch (err) {
-      alert(err.response?.status === 403 ? "Нет прав" : "Ошибка");
+      if (err.response?.status === 403) {
+        alert("У вас нет прав на изменение этого тикера");
+      } else {
+        alert("Ошибка при обновлении цены");
+      }
     }
   };
 
@@ -142,24 +150,29 @@ function App() {
             <h2 className="page-title">Личный кабинет</h2>
             <div className="management-card">
               <h3>Управление ценой</h3>
-              <input className="input" placeholder="Тикер" value={myTicker} onChange={e => setMyTicker(e.target.value.toUpperCase())} />
-              <input className="input" type="number" placeholder="Цена" value={newPrice} onChange={e => setNewPrice(e.target.value)} />
-              <button onClick={handleUpdatePrice} className="update-button">Обновить</button>
+              <p style={{ fontSize: '0.8rem', color: '#7f8c8d', marginBottom: '10px' }}>Обновлять цену может только создатель тикера</p>
+              <input className="input" placeholder="Тикер (напр. BTC)" value={myTicker} onChange={e => setMyTicker(e.target.value.toUpperCase())} />
+              <input className="input" type="number" placeholder="Новая цена" value={newPrice} onChange={e => setNewPrice(e.target.value)} />
+              <button onClick={handleUpdatePrice} className="update-button">Обновить цену</button>
             </div>
             <div className="table-wrapper">
               <table className="table">
                 <thead>
-                  <tr><th>Тикер</th><th>Кол-во</th><th>Цена</th><th>Итого</th></tr>
+                  <tr><th>Тикер</th><th>Кол-во</th><th>Тек. Цена</th><th>Итого</th></tr>
                 </thead>
                 <tbody>
-                  {holdings.map(h => (
-                    <tr key={h.ticker}>
-                      <td>${h.ticker}</td>
-                      <td>{h.amount}</td>
-                      <td>${(marketPrices[h.ticker]?.price || 0).toFixed(2)}</td>
-                      <td>${(h.amount * (marketPrices[h.ticker]?.price || 0)).toFixed(2)}</td>
-                    </tr>
-                  ))}
+                  {holdings.length > 0 ? (
+                    holdings.map(h => (
+                      <tr key={h.ticker}>
+                        <td>${h.ticker}</td>
+                        <td>{h.amount}</td>
+                        <td>${(marketPrices[h.ticker]?.price || 0).toFixed(2)}</td>
+                        <td>${(h.amount * (marketPrices[h.ticker]?.price || 0)).toFixed(2)}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr><td colSpan="4" style={{ textAlign: 'center' }}>Портфель пуст</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
