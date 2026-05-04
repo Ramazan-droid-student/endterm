@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-
+import "./css/style.css"
 function Auth({ setToken }) {
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  const API_URL = "https://endterm-41mm.onrender.com"; 
+  const API_URL = "https://endterm-41mm.onrender.com/api/auth"; 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
