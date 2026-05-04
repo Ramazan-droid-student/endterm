@@ -6,34 +6,36 @@ function Auth({ setToken }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
+  const API_URL = "https://endterm-41mm.onrender.com"; 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!username || !password) return alert("Заполните поля");
 
-    const url = ` https://endterm-41mm.onrender.com${isLogin ? 'login' : 'register'}`;
+    const endpoint = isLogin ? '/login' : '/register';
     
     try {
-      const res = await axios.post(url, { username, password });
+      const res = await axios.post(`${API_URL}${endpoint}`, { username, password });
       
       if (isLogin) {
         if (res.data.token) {
           setToken(res.data.token);
         }
       } else {
-        alert("Регистрация успешна! Теперь войдите.");
+        alert("Регистрация успешна!");
         setIsLogin(true);
       }
     } catch (err) {
-      const message = err.response?.data?.message || err.response?.data?.error || "Ошибка сервера";
-      alert("Ошибка: " + message);
+      const message = err.response?.data?.message || err.response?.data?.error || "Ошибка";
+      alert(message);
     }
   };
 
   return (
-    <div className="container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+    <div className="container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
       <div className="management-card" style={{ width: '100%', maxWidth: '400px', textAlign: 'center' }}>
         <h2 className="page-title" style={{ borderLeft: 'none', textAlign: 'center', padding: 0 }}>
-          {isLogin ? 'Вход в систему' : 'Регистрация'}
+          {isLogin ? 'Вход' : 'Регистрация'}
         </h2>
         
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -41,7 +43,7 @@ function Auth({ setToken }) {
             className="input"
             style={{ width: '100%', marginRight: 0 }}
             type="text"
-            placeholder="Имя пользователя" 
+            placeholder="Логин" 
             value={username}
             onChange={e => setUsername(e.target.value)} 
           />
@@ -54,20 +56,17 @@ function Auth({ setToken }) {
             onChange={e => setPassword(e.target.value)} 
           />
           <button className="update-button" type="submit" style={{ width: '100%' }}>
-            {isLogin ? 'Войти' : 'Создать аккаунт'}
+            {isLogin ? 'Войти' : 'Создать'}
           </button>
         </form>
 
         <div style={{ marginTop: '20px' }}>
-          <span style={{ fontSize: '0.9rem', color: '#666' }}>
-            {isLogin ? 'Нет аккаунта?' : 'Уже есть аккаунт?'}
-          </span>
           <button 
             className="logout-btn" 
-            style={{ marginLeft: '10px', background: 'none', color: '#3498db', fontWeight: 'bold' }}
+            style={{ background: 'none', color: '#3498db', border: 'none', cursor: 'pointer' }}
             onClick={() => setIsLogin(!isLogin)}
           >
-            {isLogin ? 'Зарегистрироваться' : 'Войти'}
+            {isLogin ? 'Нет аккаунта? Регистрация' : 'Есть аккаунт? Войти'}
           </button>
         </div>
       </div>
