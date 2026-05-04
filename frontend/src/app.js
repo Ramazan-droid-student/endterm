@@ -12,10 +12,11 @@ function App() {
   const [newPrice, setNewPrice] = useState("");
   const [token, setToken] = useState(localStorage.getItem('token') || null);
 
+  const [newTickerName, setNewTickerName] = useState("");
+  const [initialPrice, setInitialPrice] = useState("");
+
   const BASE_URL = "https://endterm-41mm.onrender.com";
-
   const API_URL = `${BASE_URL}/api`;
-
   const WS_URL = BASE_URL.replace(/^http/, 'ws');
 
   useEffect(() => {
@@ -40,7 +41,7 @@ function App() {
         });
         setMarketPrices(prices);
       } catch (e) {
-        console.error("Ошибка при получении акций:", e);
+        console.error(e);
       }
     };
 
@@ -74,25 +75,36 @@ function App() {
       setWalletBalance(res.data.balance);
       setHoldings(res.data.holdings);
     } catch (err) {
-      alert(err.response?.data?.message || "Ошибка при покупке");
+      alert(err.response?.data?.message || "Ошибка");
+    }
+  };
+
+  const handleCreateTicker = async () => {
+    if (!newTickerName || !initialPrice) return alert("Заполните поля");
+    try {
+      await axios.post(`${API_URL}/stocks/create`, 
+        { ticker: newTickerName, initialPrice: parseFloat(initialPrice) }, 
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setNewTickerName("");
+      setInitialPrice("");
+      alert("Тикер создан!");
+    } catch (err) {
+      alert(err.response?.data?.message || "Ошибка");
     }
   };
 
   const handleUpdatePrice = async () => {
-    if (!myTicker || !newPrice) return alert("Заполните все поля");
+    if (!myTicker || !newPrice) return alert("Заполните поля");
     try {
       await axios.patch(`${API_URL}/stocks/update-price`, 
         { ticker: myTicker, newPrice: parseFloat(newPrice) }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setNewPrice("");
-      alert("Цена успешно обновлена");
+      alert("Цена обновлена");
     } catch (err) {
-      if (err.response?.status === 403) {
-        alert("У вас нет прав на изменение этого тикера");
-      } else {
-        alert("Ошибка при обновлении цены");
-      }
+      alert(err.response?.status === 403 ? "Нет прав" : "Ошибка");
     }
   };
 
@@ -148,17 +160,25 @@ function App() {
         {activePage === 'portfolio' && (
           <section>
             <h2 className="page-title">Личный кабинет</h2>
+            
+            <div className="management-card" style={{ marginBottom: '20px' }}>
+              <h3>Создать тикер</h3>
+              <input className="input" placeholder="Название тикера" value={newTickerName} onChange={e => setNewTickerName(e.target.value.toUpperCase())} />
+              <input className="input" type="number" placeholder="Начальная цена" value={initialPrice} onChange={e => setInitialPrice(e.target.value)} />
+              <button onClick={handleCreateTicker} className="update-button" style={{ background: '#2ecc71' }}>Создать</button>
+            </div>
+
             <div className="management-card">
               <h3>Управление ценой</h3>
-              <p style={{ fontSize: '0.8rem', color: '#7f8c8d', marginBottom: '10px' }}>Обновлять цену может только создатель тикера</p>
-              <input className="input" placeholder="Тикер (напр. BTC)" value={myTicker} onChange={e => setMyTicker(e.target.value.toUpperCase())} />
+              <input className="input" placeholder="Тикер" value={myTicker} onChange={e => setMyTicker(e.target.value.toUpperCase())} />
               <input className="input" type="number" placeholder="Новая цена" value={newPrice} onChange={e => setNewPrice(e.target.value)} />
-              <button onClick={handleUpdatePrice} className="update-button">Обновить цену</button>
+              <button onClick={handleUpdatePrice} className="update-button">Обновить</button>
             </div>
+
             <div className="table-wrapper">
               <table className="table">
                 <thead>
-                  <tr><th>Тикер</th><th>Кол-во</th><th>Тек. Цена</th><th>Итого</th></tr>
+                  <tr><th>Тикер</th><th>Кол-во</th><th>Цена</th><th>Итого</th></tr>
                 </thead>
                 <tbody>
                   {holdings.length > 0 ? (
