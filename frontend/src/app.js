@@ -88,7 +88,6 @@ function App() {
       );
       setNewTickerName("");
       setInitialPrice("");
-      alert("Тикер создан!");
     } catch (err) {
       alert(err.response?.data?.message || "Ошибка");
     }
